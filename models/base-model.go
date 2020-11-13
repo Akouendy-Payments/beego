@@ -7,7 +7,6 @@ import (
 )
 
 type BaseModel struct {
-	Id   int
 	Created time.Time `orm:"auto_now_add;type(datetime)"`
 	Updated time.Time `orm:"auto_now;type(datetime)"`
 	CreatedBy string
@@ -23,6 +22,7 @@ func (b *BaseModel) TableIndex() [][]string {
 		[]string{"Updated"},
 	}
 }
+
 
 func (b *BaseModel) MetaData(userId string)  {
 	u2, _ := uuid.NewV4()

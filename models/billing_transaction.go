@@ -9,41 +9,53 @@ import (
 	"github.com/astaxie/beego/orm"
 )
 
-type Billing_transaction struct {
-	Id       int64  `orm:"auto"`
-	Status   string `orm:"size(128)"`
-	Provider string `orm:"size(128)"`
+type TransactionStatus string
+
+const (
+	PENDING TransactionStatus = "PENDING"
+	FAILED  TransactionStatus = "FAILED"
+	SUCCESS TransactionStatus = "SUCCESS"
+)
+
+type BillingTransaction struct {
+	Id int64 `orm:"auto"`
+	BaseModel
+	Status        TransactionStatus
+	TransactionId string
+	Provider      string `orm:"size(128)"`
+	Amount        int
+	Description   string
 }
 
 func init() {
-	orm.RegisterModel(new(Billing_transaction))
+	orm.RegisterModel(new(BillingTransaction))
 }
 
-// AddBilling_transaction insert a new Billing_transaction into database and returns
+// AddBillingTransaction insert a new BillingTransaction into database and returns
 // last inserted Id on success.
-func AddBilling_transaction(m *Billing_transaction) (id int64, err error) {
+func AddBillingTransaction(m *BillingTransaction) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return
 }
 
-// GetBilling_transactionById retrieves Billing_transaction by Id. Returns error if
+// GetBillingTransactionById retrieves BillingTransaction by Id. Returns error if
 // Id doesn't exist
-func GetBilling_transactionById(id int64) (v *Billing_transaction, err error) {
+func GetBillingTransactionById(id int64) (v *BillingTransaction, err error) {
 	o := orm.NewOrm()
-	v = &Billing_transaction{Id: id}
-	if err = o.QueryTable(new(Billing_transaction)).Filter("Id", id).RelatedSel().One(v); err == nil {
+	v = &BillingTransaction{Id: id}
+	if err = o.QueryTable(new(BillingTransaction)).Filter("Id", id).RelatedSel().One(v); err == nil {
 		return v, nil
 	}
 	return nil, err
 }
 
-// GetAllBilling_transaction retrieves all Billing_transaction matches certain condition. Returns empty list if
+// GetAllBillingTransaction retrieves all BillingTransaction matches certain condition. Returns empty list if
 // no records exist
-func GetAllBilling_transaction(query map[string]string, fields []string, sortby []string, order []string,
+func GetAllBillingTransaction(query map[string]string, fields []string, sortby []string, order []string,
 	offset int64, limit int64) (ml []interface{}, err error) {
 	o := orm.NewOrm()
-	qs := o.QueryTable(new(Billing_transaction))
+	qs := o.QueryTable(new(BillingTransaction))
 	// query k=v
 	for k, v := range query {
 		// rewrite dot-notation to Object__Attribute
@@ -89,7 +101,7 @@ func GetAllBilling_transaction(query map[string]string, fields []string, sortby 
 		}
 	}
 
-	var l []Billing_transaction
+	var l []BillingTransaction
 	qs = qs.OrderBy(sortFields...).RelatedSel()
 	if _, err = qs.Limit(limit, offset).All(&l, fields...); err == nil {
 		if len(fields) == 0 {
@@ -112,11 +124,11 @@ func GetAllBilling_transaction(query map[string]string, fields []string, sortby 
 	return nil, err
 }
 
-// UpdateBilling_transaction updates Billing_transaction by Id and returns error if
+// UpdateBillingTransaction updates BillingTransaction by Id and returns error if
 // the record to be updated doesn't exist
-func UpdateBilling_transactionById(m *Billing_transaction) (err error) {
+func UpdateBillingTransactionById(m *BillingTransaction) (err error) {
 	o := orm.NewOrm()
-	v := Billing_transaction{Id: m.Id}
+	v := BillingTransaction{Id: m.Id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
@@ -127,15 +139,15 @@ func UpdateBilling_transactionById(m *Billing_transaction) (err error) {
 	return
 }
 
-// DeleteBilling_transaction deletes Billing_transaction by Id and returns error if
+// DeleteBillingTransaction deletes BillingTransaction by Id and returns error if
 // the record to be deleted doesn't exist
-func DeleteBilling_transaction(id int64) (err error) {
+func DeleteBillingTransaction(id int64) (err error) {
 	o := orm.NewOrm()
-	v := Billing_transaction{Id: id}
+	v := BillingTransaction{Id: id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
-		if num, err = o.Delete(&Billing_transaction{Id: id}); err == nil {
+		if num, err = o.Delete(&BillingTransaction{Id: id}); err == nil {
 			fmt.Println("Number of records deleted in database:", num)
 		}
 	}

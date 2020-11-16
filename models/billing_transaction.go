@@ -22,6 +22,7 @@ type BillingTransaction struct {
 	BaseModel
 	Status        TransactionStatus
 	TransactionId string
+	ExternalId    string
 	Provider      string `orm:"size(128)"`
 	Amount        int
 	Description   string

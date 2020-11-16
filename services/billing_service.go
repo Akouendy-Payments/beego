@@ -40,7 +40,7 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment, callbackUrl string
 	transaction.Status = models.FAILED
 	transaction.Provider = payment.Provider
 	transaction.OwnerId = payment.UserId
-
+	transaction.ExternalId = payment.ExternalId
 	str := s.merchantId + "|" + transaction.Token + "|" + strconv.Itoa(payment.Amount) + "|akouna_matata"
 	hash := Hash512(str)
 
@@ -81,10 +81,11 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment, callbackUrl string
 	return
 }
 
-func (s *AkouendyPaymentService) ValidatePayment(check PaymentCheck) (paymentError error) {
+func (s *AkouendyPaymentService) ValidatePayment(check PaymentCheck) (token string, paymentError error) {
 	var status models.TransactionStatus = models.FAILED
 	var transaction models.BillingTransaction
-	token := strings.Split(check.RefCmd, "_")
+	tokens := strings.Split(check.RefCmd, "_")
+	token = tokens[0]
 	o := orm.NewOrm()
 	err := o.QueryTable(new(models.BillingTransaction)).Filter("token", token).One(&transaction)
 	if err != orm.ErrNoRows {

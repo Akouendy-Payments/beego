@@ -1,10 +1,10 @@
 package services
 
 import (
-	"crypto/sha512"
-	"encoding/hex"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Akouendy/akouendy_payments/models"
@@ -32,7 +32,7 @@ func NewPaymentService() *AkouendyPaymentService {
 	token := beego.AppConfig.String("payment-merchant-token")
 	return &AkouendyPaymentService{merchantId: id, merchantToken: token}
 }
-func (s *AkouendyPaymentService) PaymentInit(payment Payment) (checkoutUrl string, initError error) {
+func (s *AkouendyPaymentService) PaymentInit(payment Payment, callbackUrl string, returnUrl string) (checkoutUrl string, initError error) {
 	logs.Info("== AkouendyPaymentService merchantId ==== " + s.merchantId)
 	logs.Info("== AkouendyPaymentService merchantToken ==== " + s.merchantToken)
 	transaction := models.BillingTransaction{}
@@ -56,11 +56,11 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment) (checkoutUrl strin
 		"total_amount": payment.Amount,
 		"description":  payment.Desc,
 		"merchant_id":  s.merchantId,
-		"cancel_url":   "",
-		"return_url":   "",
+		"cancel_url":   returnUrl,
+		"return_url":   returnUrl,
 		"trans_id":     transaction.Token,
 		"hash":         hash,
-		"webhook":      "",
+		"webhook":      callbackUrl,
 	}
 	r, err := req.Post(initUrl, param, header)
 	statusCode := r.Response().StatusCode
@@ -86,8 +86,37 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment) (checkoutUrl strin
 	return
 }
 
-func Hash512(text string) string {
-	hasher := sha512.New()
-	hasher.Write([]byte(text))
-	return hex.EncodeToString(hasher.Sum(nil))
+func (s *AkouendyPaymentService) ValidatePayment(check PaymentCheck) (paymentError error) {
+	var status models.TransactionStatus = models.FAILED
+	var transaction models.BillingTransaction
+	logs.Info("== ValidatePayment check ==== ", check)
+	token := strings.Split(check.RefCmd, "_")
+	o := orm.NewOrm()
+	err := o.QueryTable(new(models.BillingTransaction)).Filter("token", token).One(&transaction)
+	logs.Info("===transaction", transaction)
+	logs.Info("=== token", token)
+	if err != orm.ErrNoRows {
+		str := s.merchantToken + "|" + check.RefCmd + "|" + strconv.Itoa(check.Status)
+		hash := Hash512(str)
+		//compare the hash received and the calculated one
+		if hash == check.Hash && check.Status == 200 {
+			status = models.SUCCESS
+			o.QueryTable(new(models.Billing)).Filter("owner_id", transaction.OwnerId).Update(orm.Params{
+				"balance": orm.ColValue(orm.ColAdd, transaction.Amount),
+			})
+		} else {
+			paymentError = errors.New("Hash check failed")
+			logs.Error("From request :", check.Hash)
+			logs.Error("Calculated :", hash)
+		}
+		transaction.Status = status
+		if _, err := o.Update(&transaction); err != nil {
+			paymentError = errors.New("Update transaction failed")
+		}
+
+	} else {
+		paymentError = orm.ErrNoRows
+		logs.Error("Settings row  not found, token :", token)
+	}
+	return
 }

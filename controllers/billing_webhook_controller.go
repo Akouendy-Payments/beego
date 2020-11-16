@@ -4,7 +4,7 @@ import (
 	"akouendy-sms-engine/domain"
 	"net/http"
 
-	"github.com/Akouendy/akouendy_payments/beego/services"
+	"github.com/akouendy-payments/beego/services"
 	"github.com/astaxie/beego"
 )
 

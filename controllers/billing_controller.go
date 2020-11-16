@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/Akouendy/akouendy_payments/beego/models"
-	"github.com/Akouendy/akouendy_payments/beego/services"
+	"github.com/akouendy-payments/beego/models"
+	"github.com/akouendy-payments/beego/services"
 	"github.com/astaxie/beego"
 	"github.com/jinzhu/copier"
 )

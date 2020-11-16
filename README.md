@@ -7,9 +7,19 @@ This module is used for integration of Akouendy Payments in beego project.
 
     go get https://github.com/Akouendy/akouendy_payments
 
+#### Usage
+```
+cd your_project
+cp GOPATH/src/github.com/Akouendy-Payments/beego/controllers/ controllers
+```
+
 ## Features
 
-* Integrate Akouendy Web Payments
+* Create Billing Account
+* Get user Billing Accounts
+* Charge Billing Account
+* Get Billing Transactions
+* Webhook for Transaction validation
 
 
 ## License

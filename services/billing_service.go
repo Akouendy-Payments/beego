@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Akouendy/akouendy_payments/beego/models"
+	"github.com/akouendy-payments/beego/models"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/orm"

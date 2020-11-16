@@ -3,7 +3,7 @@ package controllers
 import (
 	"strings"
 
-	"github.com/Akouendy/akouendy_payments/beego/models"
+	"github.com/akouendy-payments/beego/models"
 )
 
 //  BillingTransactionController operations for BillingTransaction

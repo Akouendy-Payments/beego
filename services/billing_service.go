@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/akouendy-payments/beego/models"
+	"github.com/Akouendy-Payments/beego/models"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/orm"
@@ -16,7 +15,7 @@ import (
 
 const (
 	baseUrl string = "https://pay.akouendy.com"
-	//baseUrl      string = "http://localhost:9009"
+	// baseUrl      string = "http://localhost:9009"
 	initUrl      string = baseUrl + "/v1/billing/payment/init"
 	statusUrl    string = baseUrl + "/v1/billing/payment/status"
 	checkoutBase string = baseUrl + "/v1/billing/"
@@ -34,14 +33,23 @@ func NewPaymentService() *AkouendyPaymentService {
 	debug := beego.AppConfig.DefaultBool("payment-debug", false)
 	return &AkouendyPaymentService{merchantId: id, merchantToken: token, debug: debug}
 }
-func (s *AkouendyPaymentService) PaymentInit(payment Payment, callbackUrl string, returnUrl string) (checkoutUrl string, initError error) {
-	transaction := models.BillingTransaction{}
+func (s *AkouendyPaymentService) PaymentInit(payment Payment, oldTrxToken string, callbackUrl string, returnUrl string) (checkoutUrl string, initError error) {
+	var transaction models.BillingTransaction
+	o := orm.NewOrm()
+	if len(oldTrxToken) > 5 {
+		o.QueryTable(new(models.BillingTransaction)).Filter("Token", oldTrxToken).Filter("Status",models.PENDING).One(&transaction)
+	} else {
+		transaction.Status = models.FAILED
+		transaction.Provider = payment.Provider
+		transaction.OwnerId = payment.UserId
+		transaction.ExternalId = payment.ExternalId
+		transaction.Amount = payment.Amount
+		transaction.Description = payment.Desc
+	}
 	transaction.MetaData(payment.UserId)
-	transaction.Status = models.FAILED
-	transaction.Provider = payment.Provider
-	transaction.OwnerId = payment.UserId
-	transaction.ExternalId = payment.ExternalId
-	str := s.merchantId + "|" + transaction.Token + "|" + strconv.Itoa(payment.Amount) + "|akouna_matata"
+	logs.Info("===== trax====",transaction)
+
+	str := s.merchantId + "|" + transaction.Token + "|" + strconv.Itoa(transaction.Amount) + "|akouna_matata"
 	hash := Hash512(str)
 
 	response := PlatformResponse{}
@@ -50,8 +58,8 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment, callbackUrl string
 	req.Debug = s.debug
 	header.Set("Content-Type", "application/x-www-form-urlencoded")
 	param := req.Param{
-		"total_amount": payment.Amount,
-		"description":  payment.Desc,
+		"total_amount": transaction.Amount,
+		"description":  transaction.Description,
 		"merchant_id":  s.merchantId,
 		"cancel_url":   returnUrl,
 		"return_url":   returnUrl,
@@ -66,12 +74,16 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment, callbackUrl string
 			r.ToJSON(&response)
 			transaction.Status = models.PENDING
 			transaction.TransactionId = response.Token
-			transaction.Amount = payment.Amount
-			transaction.Description = payment.Desc
-			o := orm.NewOrm()
-			_, initError := o.Insert(&transaction)
+
+			initError := errors.New("Insert or Update error")
+			if len(oldTrxToken) > 5  {
+				_, initError = o.Update(&transaction,"Token","Updated")
+			} else {
+				_, initError = o.Insert(&transaction)
+			}
+
 			if initError == nil {
-				checkoutUrl = checkoutBase + payment.Provider + "/" + response.Token
+				checkoutUrl = checkoutBase + transaction.Provider + "/" + response.Token
 			}
 
 		}

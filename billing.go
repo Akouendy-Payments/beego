@@ -1,1 +1,1 @@
-package akouendy_payments
+package beego

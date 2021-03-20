@@ -29,8 +29,8 @@ type AkouendyPaymentService struct {
 }
 
 func NewPaymentService() *AkouendyPaymentService {
-	id := beego.AppConfig.String("payment-merchant-id")
-	token := beego.AppConfig.String("payment-merchant-token")
+	id, _ := beego.AppConfig.String("payment-merchant-id")
+	token, _ := beego.AppConfig.String("payment-merchant-token")
 	debug := beego.AppConfig.DefaultBool("payment-debug", false)
 	return &AkouendyPaymentService{merchantId: id, merchantToken: token, debug: debug}
 }

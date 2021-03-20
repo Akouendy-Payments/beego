@@ -25,7 +25,7 @@ func (b *BaseModel) TableIndex() [][]string {
 }
 
 func (b *BaseModel) MetaData(userId string) {
-	u2, _ := uuid.NewV4()
+	u2 := uuid.NewV4()
 	b.Token = u2.String()
 	fmt.Println(" === my user id===:", userId)
 	b.CreatedBy = userId

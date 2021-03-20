@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"github.com/Akouendy-Payments/beego/models"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
+	"github.com/beego/beego/v2/core/logs"
+	beego "github.com/beego/beego/v2/server/web"
 	"github.com/imroc/req"
 )
 
@@ -37,7 +38,7 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment, oldTrxToken string
 	var transaction models.BillingTransaction
 	o := orm.NewOrm()
 	if len(oldTrxToken) > 5 {
-		o.QueryTable(new(models.BillingTransaction)).Filter("Token", oldTrxToken).Filter("Status",models.PENDING).One(&transaction)
+		o.QueryTable(new(models.BillingTransaction)).Filter("Token", oldTrxToken).Filter("Status", models.PENDING).One(&transaction)
 	} else {
 		transaction.Status = models.FAILED
 		transaction.Provider = payment.Provider
@@ -47,7 +48,7 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment, oldTrxToken string
 		transaction.Description = payment.Desc
 	}
 	transaction.MetaData(payment.UserId)
-	logs.Info("===== trax====",transaction)
+	logs.Info("===== trax====", transaction)
 
 	str := s.merchantId + "|" + transaction.Token + "|" + strconv.Itoa(transaction.Amount) + "|akouna_matata"
 	hash := Hash512(str)
@@ -76,8 +77,8 @@ func (s *AkouendyPaymentService) PaymentInit(payment Payment, oldTrxToken string
 			transaction.TransactionId = response.Token
 
 			initError := errors.New("Insert or Update error")
-			if len(oldTrxToken) > 5  {
-				_, initError = o.Update(&transaction,"Token","Updated")
+			if len(oldTrxToken) > 5 {
+				_, initError = o.Update(&transaction, "Token", "Updated")
 			} else {
 				_, initError = o.Insert(&transaction)
 			}

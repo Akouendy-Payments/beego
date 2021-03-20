@@ -1,4 +1,4 @@
-module github.com/Akouendy/akouendy_payments
+module github.com/Akouendy-Payments/beego
 
 go 1.15
 

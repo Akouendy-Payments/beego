@@ -10,7 +10,7 @@ This module is used for integration of Akouendy Payments in beego project.
 #### Usage
 ```
 cd your_project
-cp GOPATH/src/github.com/Akouendy-Payments/beego/controllers/ controllers
+cp GOPATH/src/github.com/akouendy-payments/beego/controllers/ controllers
 ```
 
 ## Features
